@@ -1,0 +1,5 @@
+{
+   "pin": 4,
+   "broker": "tcp://linksmart-dev.fit.fraunhofer.de:1883",
+   "topic": "study/pi/motion"
+}
