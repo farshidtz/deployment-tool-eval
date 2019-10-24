@@ -10,6 +10,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stianeikeland/go-rpio"
+	"github.com/satori/go.uuid"
 )
 
 type Config struct {
@@ -27,6 +28,7 @@ func main() {
 	log.Print("Configured duration: ", config.Duration)
 	log.Print("Configured pin: ", config.Pin)
 	log.Print("Configured mqtt broker: ", config.Broker)
+	log.Print("Configured mqtt topic: ", config.Topic)
 
 	if config.Duration == 0 {
 		log.Fatal("Duration cannot be zero!")
@@ -44,7 +46,7 @@ func main() {
 
 	client := setupMQTTClient(config.Broker)
 
-	client.Subscribe(config.Topic, 0,
+	client.Subscribe(config.Topic, 1,
 		func(client mqtt.Client, msg mqtt.Message) {
 			log.Printf("received message: %s", msg.Payload())
 			pin.High()
@@ -71,6 +73,15 @@ func loadConfig(path string) Config {
 
 func setupMQTTClient(endpoint string) mqtt.Client {
 	opts := mqtt.NewClientOptions().AddBroker(endpoint)
+	opts.SetCleanSession(false)
+	opts.SetClientID("light-"+uuid.Must(uuid.NewV4()).String())
+
+	opts.SetOnConnectHandler(func(pahoClient mqtt.Client) {
+		log.Printf("MQTT: Connected")
+	})
+	opts.SetConnectionLostHandler(func(pahoClient mqtt.Client, err error) {
+		log.Printf("MQTT: Disconnected: %s", err)
+	})
 
 	c := mqtt.NewClient(opts)
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
@@ -78,7 +89,6 @@ func setupMQTTClient(endpoint string) mqtt.Client {
 	}
 
 	return c
-
 }
 
 func waitForInterrupt() {

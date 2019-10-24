@@ -6,9 +6,9 @@ led = LED(3)
 
 while True:
     led.on()
-    sleep("0.2")
+    sleep(0.25)
     led.off()
-    sleep("0.2")
+    sleep(0.25)
     print("blink")
 
 def handle_exit(sig, frame):

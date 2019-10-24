@@ -9,6 +9,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stianeikeland/go-rpio"
 )
 
@@ -72,6 +73,14 @@ func loadConfig(path string) Config {
 
 func setupMQTTClient(endpoint string) mqtt.Client {
 	opts := mqtt.NewClientOptions().AddBroker(endpoint)
+	opts.SetClientID("light-"+uuid.Must(uuid.NewV4()).String())
+
+	opts.SetOnConnectHandler(func(pahoClient mqtt.Client) {
+		log.Printf("MQTT: Connected")
+	})
+	opts.SetConnectionLostHandler(func(pahoClient mqtt.Client, err error) {
+		log.Printf("MQTT: Disconnected: %s", err)
+	})
 
 	c := mqtt.NewClient(opts)
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
